@@ -1,7 +1,7 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from src.models import Base
+from src.models.BaseModel import Base
 from src.settings import settings
 
 if settings.DEBUG:

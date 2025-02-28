@@ -1,14 +1,13 @@
 import random
 import string
-from typing import Optional
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from passlib.context import CryptContext
-from sqlalchemy.orm import Session
 
 from src.db import SessionLocal, get_db
-from src.models import User
+from src.models.UserModel import User
+from src.repositories.UserRepository import UserRepository
 from src.settings import settings
 
 security = HTTPBasic()
@@ -23,11 +22,17 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
 
 
-def get_current_user(
-    credentials: HTTPBasicCredentials = Depends(security), db: Session = Depends(get_db)
-) -> Optional[User] | None:
-    user = db.query(User).filter(User.username == credentials.username).first()
-    if not user or not verify_password(credentials.password, str(user.password)):
+def generate_password(length: int = 12) -> str:
+    characters = string.ascii_letters + string.digits
+    return "".join(random.choice(characters) for _ in range(length))
+
+
+async def get_current_user(
+    credentials: HTTPBasicCredentials = Depends(security),
+    user_repository: UserRepository = Depends(),
+) -> User:
+    user = await user_repository.get_user_by_username(credentials.username)
+    if not user or not verify_password(credentials.password, user.password):  # type: ignore
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Неверные учетные данные",
@@ -36,18 +41,13 @@ def get_current_user(
     return user
 
 
-def get_staff_user(current_user: User = Depends(get_current_user)):
+async def get_staff_user(current_user: User = Depends(get_current_user)):
     if not current_user.is_staff:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Доступ только для staff пользователей",
         )
     return current_user
-
-
-def generate_password(length: int = 12) -> str:
-    characters = string.ascii_letters + string.digits
-    return "".join(random.choice(characters) for _ in range(length))
 
 
 def create_staff_user():

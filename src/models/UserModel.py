@@ -1,9 +1,6 @@
-from sqlalchemy import Boolean, Column, ForeignKey, Integer, Numeric, String
-from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy import Boolean, Column, Integer, Numeric, String
 
-
-class Base(DeclarativeBase):
-    pass
+from src.models.BaseModel import Base
 
 
 class User(Base):
@@ -20,12 +17,3 @@ class User(Base):
     is_verified = Column(Boolean, default=False, server_default="false")
     is_staff = Column(Boolean, default=False, server_default="false")
     password = Column(String, nullable=False)
-
-
-class Transaction(Base):
-    __tablename__ = "transactions"
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
-    transaction_id = Column(String, unique=True, nullable=False, index=True)
-    amount = Column(Numeric(precision=10, scale=2), nullable=False)

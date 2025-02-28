@@ -36,8 +36,3 @@ class UserResponse(BaseModel):
 
     class Config:
         from_attributes = True
-
-
-class BalanceUpdate(BaseModel):
-    amount: Decimal = Field(..., max_digits=10, decimal_places=2)
-    transaction_id: str
